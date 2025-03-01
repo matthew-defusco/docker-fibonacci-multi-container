@@ -1,0 +1,24 @@
+name: Deploy Multi-Container App
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - run: docker build -t matthewdefusco/react-test -f ./client/Dockerfile.dev ./client
+      - run: docker run -e CI=true matthewdefusco/react-test npm test
+
+      - run: docker build -t matthewdefusco/multi-client ./client
+      - run: docker build -t matthewdefusco/multi-nginx ./nginx
+      - run: docker build -t matthewdefusco/multi-server ./server
+      - run: docker build -t matthewdefusco/multi-worker ./worker
+
+      - run: docker push matthewdefusco/multi-client
+      - run: docker push matthewdefusco/multi-nginx
+      - run: docker push matthewdefusco/multi-server
+      - run: docker push matthewdefusco/multi-worker
